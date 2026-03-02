@@ -147,7 +147,9 @@ export const transcribeAIAudio = async (pcmData) => {
             ]
         });
 
-        return response.text;
+        const rawText = response.text || "";
+        const cleanText = rawText.replace(/<thought>[\s\S]*?<\/thought>\s*/g, '').trim();
+        return cleanText;
     } catch (error) {
         console.error("Error transcribing AI audio:", error);
         return "";
@@ -182,7 +184,9 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
             ]
         });
 
-        return response.text;
+        const rawText = response.text || "";
+        const cleanText = rawText.replace(/<thought>[\s\S]*?<\/thought>\s*/g, '').trim();
+        return cleanText;
     } catch (error) {
         console.error("Error transcribing client audio:", error);
         return "";
