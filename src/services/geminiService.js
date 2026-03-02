@@ -173,10 +173,10 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
             model: 'gemini-3-flash-preview',
             config: {
                 temperature: 0.0,
-                systemInstruction: "You are a pure audio transcriber. If the audio is silent, mostly background noise, or unintelligible, output NOTHING. Do NOT guess or hallucinate."
+                systemInstruction: "You are a pure audio transcriber. If the audio is silent, mostly background noise, or unintelligible, you must return absolutely nothing. DO NOT output the words 'empty string' or 'empty_result' or 'thank you'. Just return a blank output. Do NOT guess or hallucinate."
             },
             contents: [
-                "Transcribe this audio exactly word-for-word. Return nothing if it is silent or background noise. Absolutely no extra text or thinking.",
+                "Transcribe this audio exactly word-for-word. Return nothing if it is silent or background noise. Absolutely no extra text or thinking. DO NOT write 'empty string'.",
                 {
                     inlineData: {
                         mimeType: "audio/webm",
@@ -193,7 +193,11 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
         const hallucinations = [
             /i'm going to go to the store\.?/gi,
             /thank you for watching\.?/gi,
-            /thank you\.?/gi
+            /^thank you\.?$/gi,
+            /^empty string\.?$/gi,
+            /^empty_result\.?$/gi,
+            /^hello, how are you\??\.?$/gi,
+            /^hello\??\.?$/gi
         ];
 
         for (const regex of hallucinations) {
