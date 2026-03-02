@@ -43,7 +43,8 @@ export default function InterviewRoom() {
         setSessionInfo(intake);
 
         // Initialize the Audio Streamer
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const rawApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const apiKey = rawApiKey ? rawApiKey.trim() : "";
         if (!apiKey) {
             console.warn("No VITE_GEMINI_API_KEY found. Live Voice API requires a real key. Using mock fallback for UI demonstration.");
 
