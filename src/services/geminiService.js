@@ -29,6 +29,8 @@ export const summarizeCase = async (transcript) => {
         }
 
         const ai = getClient();
+        const currentDateTime = new Date().toLocaleString();
+
         const prompt = `
 You are a highly skilled legal assistant. Please review the following interview transcript between an AI intake assistant and a prospective client.
 Provide a concise and structured summary highlighting the most important points so the lawyer can review it and decide whether to take the case.
@@ -43,7 +45,7 @@ CRITICAL FORMATTING INSTRUCTIONS:
 - Add <br> tags for spacing where necessary.
 
 Include the following sections (formatted as mentioned above):
-- <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">CLIENT OVERVIEW</h4>: Brief context (name, incident date if mentioned).
+- <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">CLIENT OVERVIEW</h4>: Brief context (name, incident date if mentioned). You MUST include a line here stating: <b>Date/Time:</b> ${currentDateTime}
 - <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">CORE ISSUE</h4>: The main legal problem.
 - <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">KEY FACTS</h4>: Bulleted list of important details.
 - <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">POTENTIAL RED FLAGS</h4>: Anything that might make the case difficult (e.g., statute of limitations, lack of evidence).
