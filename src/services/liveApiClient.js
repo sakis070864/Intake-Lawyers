@@ -96,6 +96,10 @@ RULES FOR THE INTAKE PROCESS:
 
         this.ws.onclose = (event) => {
             console.log(`WebSocket closed: code=${event.code} reason=${event.reason}`);
+            // Expose the raw error code cleanly to the UI state if it's an abnormal closure
+            if (event.code !== 1000 && event.code !== 1005) {
+                if (this.onError) this.onError(new Error(`WS Close Code ${event.code}: ${event.reason || 'Unknown Server Disconnect'}`));
+            }
             this.ws = null;
             if (this.onClose) this.onClose(event);
         };

@@ -97,6 +97,12 @@ export default function InterviewRoom() {
             }
         );
 
+        // Catch low-level WebSocket drops and print them entirely to the UI
+        audioStreamerRef.current.client.onError = (err) => {
+            console.error("Caught deep WS Error:", err);
+            setError(`Connection Dropped: ${err.message || "Unknown Network Error. Is the API Key correct?"}`);
+        };
+
         const cleanup = () => {
             if (audioStreamerRef.current) {
                 audioStreamerRef.current.disconnect();
