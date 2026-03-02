@@ -134,7 +134,7 @@ YOUR INSTRUCTIONS:
         const msg = {
             realtimeInput: {
                 mediaChunks: [{
-                    mimeType: `audio / pcm; rate = ${actualSampleRate} `,
+                    mimeType: `audio/pcm;rate=16000`,
                     data: b64Audio
                 }]
             }
