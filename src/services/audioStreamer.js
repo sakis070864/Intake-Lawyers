@@ -66,8 +66,11 @@ export class AudioStreamer {
         this.client.connect();
 
         try {
-            // Initialize Audio Context (OS Native Rate)
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Initialize Audio Context explicitly at 16000Hz. 
+            // If we inherit Edge's hardware 48000Hz default, the PCM chunk lengths will mismatch 
+            // the WebSocket header, causing Gemini Native Audio to drop with Code 1000.
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext({ sampleRate: 16000 });
 
             // Aggressive Resume for Edge Hardware Renderer
             if (this.audioContext.state === 'suspended') {
