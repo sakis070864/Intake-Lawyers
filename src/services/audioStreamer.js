@@ -163,8 +163,9 @@ export class AudioStreamer {
                                     const text = event.results[i][0].transcript.trim();
                                     if (text && this.onTranscript) {
                                         this.onTranscript({ role: 'user', text: text });
-                                        // Force the Live AI to hear the perfect transcript text, bypassing PCM bugs
-                                        this.client.sendText(text);
+                                        // DO NOT force text injection. 'gemini-2.5-flash-native-audio-preview' 
+                                        // expects purely continuous PCM audio. Text injection causes Code 1000 exit.
+                                        // this.client.sendText(text);
                                     }
                                 }
                             }
@@ -223,8 +224,9 @@ export class AudioStreamer {
                                         const cleanText = transcriptText.trim();
                                         if (cleanText !== this.lastPolyfillTranscript) {
                                             this.onTranscript({ role: 'user', text: cleanText });
-                                            // Force the Live AI to hear the perfect transcript text, bypassing Edge PCM bugs
-                                            this.client.sendText(cleanText);
+                                            // DO NOT force text injection. 'gemini-2.5-flash-native-audio-preview' 
+                                            // expects purely continuous PCM audio. Text injection causes Code 1000 exit.
+                                            // this.client.sendText(cleanText); 
                                             this.lastPolyfillTranscript = cleanText;
                                         }
                                     }
