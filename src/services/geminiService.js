@@ -17,7 +17,8 @@ const getClient = () => {
  */
 export const summarizeCase = async (transcript) => {
     try {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const rawApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const apiKey = rawApiKey ? rawApiKey.trim() : "";
         if (!apiKey) {
             console.warn("No VITE_GEMINI_API_KEY found. Returning a mock summary for prototype demonstration.");
             return new Promise((resolve) => {
