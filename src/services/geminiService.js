@@ -131,7 +131,7 @@ export const transcribeAIAudio = async (pcmData) => {
 
         const ai = getClient();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             config: {
                 temperature: 0.0,
                 systemInstruction: "You are a pure audio transcriber. If the audio is silent or mostly background noise, output NOTHING. Do NOT guess or hallucinate."
@@ -166,7 +166,7 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
 
         const ai = getClient();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             config: {
                 temperature: 0.0,
                 systemInstruction: "You are a pure audio transcriber. If the audio is silent, mostly background noise, or unintelligible, output NOTHING. Do NOT guess or hallucinate."
@@ -197,7 +197,7 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
 export const getLiveSessionConfig = () => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     return {
-        model: "models/gemini-3.1-pro-preview",
+        model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
         apiKey: apiKey
     };
 }
