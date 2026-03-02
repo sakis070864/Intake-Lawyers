@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Link2, Clock, CheckCircle, FileText, Plus, X, Trash2 } from 'lucide-react';
+import { Link2, Clock, CheckCircle, FileText, Plus, X, Trash2, HelpCircle } from 'lucide-react';
 
 export default function Dashboard() {
     const [intakes, setIntakes] = useState([]);
@@ -9,6 +9,7 @@ export default function Dashboard() {
     const [expirationHours, setExpirationHours] = useState(2);
     const [generatedLink, setGeneratedLink] = useState('');
     const [selectedSummary, setSelectedSummary] = useState(null);
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     useEffect(() => {
         // Load existing intakes from localStorage
@@ -76,9 +77,20 @@ export default function Dashboard() {
         <div className="container animate-fade-in">
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
-                    <h1 style={{ marginBottom: '0.5rem', background: 'linear-gradient(135deg, #dfc29f, #c19b6c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        Intake Dashboard
-                    </h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <h1 style={{ margin: 0, background: 'linear-gradient(135deg, #dfc29f, #c19b6c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            Intake Dashboard
+                        </h1>
+                        <button
+                            onClick={() => setShowHelpModal(true)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none', opacity: 0.8, transition: 'opacity 0.2s' }}
+                            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                            onMouseOut={(e) => e.currentTarget.style.opacity = '0.8'}
+                            title="How it works"
+                        >
+                            <HelpCircle size={22} />
+                        </button>
+                    </div>
                     <p>Manage prospective client interviews and summaries.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => setShowModal(true)}>
@@ -254,6 +266,64 @@ export default function Dashboard() {
                         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem', flexShrink: 0 }}>
                             <button className="btn btn-secondary" onClick={() => setSelectedSummary(null)}>Close</button>
                             <button className="btn btn-primary" onClick={() => alert("This button is to save the summary in the system.")}>Save to BDF</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Help Modal */}
+            {showHelpModal && (
+                <div className="modal-overlay animate-fade-in" style={{ zIndex: 100 }}>
+                    <div className="glass-panel modal-content" style={{ width: '90%', maxWidth: '600px', margin: 'auto' }}>
+                        <div className="modal-header">
+                            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                                <HelpCircle size={24} /> How It Works
+                            </h2>
+                            <button className="close-btn" onClick={() => setShowHelpModal(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '0.5rem 0 1rem 0' }}>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: '1.5' }}>
+                                The AI Legal Intake System automates client interviews. Follow these three steps to begin handling cases.
+                            </p>
+
+                            <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(223, 194, 159, 0.1)', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--primary)' }}>
+                                        <Plus size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>1. Generate Intake Link</h3>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>Click the 'New Intake Link' button to create a unique, secure interview room for a prospective client. You can copy the generated link to email it to them.</p>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(223, 194, 159, 0.1)', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--primary)' }}>
+                                        <Link2 size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>2. AI Voice Interview</h3>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>When the client opens the link, our Live AI Voice agent will verbally interview them, asking specific questions based on legal intake guidelines to gather hard facts.</p>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(223, 194, 159, 0.1)', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--primary)' }}>
+                                        <FileText size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>3. Review Summary</h3>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>Once the call naturally concludes, the system will instantly process the entire transcript and generate a structured overview of the case for your review.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                            <button className="btn btn-primary" onClick={() => setShowHelpModal(false)}>Got it</button>
                         </div>
                     </div>
                 </div>
