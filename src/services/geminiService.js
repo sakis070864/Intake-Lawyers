@@ -186,8 +186,20 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
             ]
         });
 
-        const rawText = response.text || "";
-        const cleanText = rawText.replace(/<thought>[\s\S]*?<\/thought>\s*/g, '').trim();
+        let rawText = response.text || "";
+        let cleanText = rawText.replace(/<thought>[\s\S]*?<\/thought>\s*/g, '').trim();
+
+        // Filter known Gemini/Whisper silence hallucinations
+        const hallucinations = [
+            /i'm going to go to the store\.?/gi,
+            /thank you for watching\.?/gi,
+            /thank you\.?/gi
+        ];
+
+        for (const regex of hallucinations) {
+            cleanText = cleanText.replace(regex, '').trim();
+        }
+
         return cleanText;
     } catch (error) {
         console.error("Error transcribing client audio:", error);
