@@ -20,6 +20,15 @@ export default function InterviewRoom() {
     const messagesEndRef = useRef(null);
     const audioStreamerRef = useRef(null);
 
+    // Tracking for Auto-Reconnect
+    const intentionalDisconnect = useRef(false);
+    const transcriptRef = useRef(transcript);
+
+    // Sync transcript to ref to access it inside the onStateChange closure
+    useEffect(() => {
+        transcriptRef.current = transcript;
+    }, [transcript]);
+
     useEffect(() => {
         // Validate entry link and expiration
         const intakes = JSON.parse(localStorage.getItem('intakes') || '[]');
@@ -94,6 +103,18 @@ export default function InterviewRoom() {
             },
             (state) => {
                 setConnectionState(state);
+                // Trigger Auto-Reconnect if this was an unexpected drop (like Gemini's 15-min limit)
+                if (state === 'disconnected' && !intentionalDisconnect.current && audioStreamerRef.current) {
+                    console.log("Unexpected socket closure detected. Auto-reconnecting to maintain interview...");
+                    const history = transcriptRef.current.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+
+                    // Brief delay to allow the WebSocket to fully flush before restarting
+                    setTimeout(() => {
+                        if (!intentionalDisconnect.current && audioStreamerRef.current) {
+                            audioStreamerRef.current.connect(history);
+                        }
+                    }, 1500);
+                }
             }
         );
 
@@ -104,6 +125,7 @@ export default function InterviewRoom() {
         };
 
         const cleanup = () => {
+            intentionalDisconnect.current = true;
             if (audioStreamerRef.current) {
                 audioStreamerRef.current.disconnect();
             }
@@ -153,6 +175,8 @@ export default function InterviewRoom() {
 
     const completeInterview = async () => {
         if (!sessionInfo) return;
+
+        intentionalDisconnect.current = true;
 
         // Stop capturing audio
         if (audioStreamerRef.current) {

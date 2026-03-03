@@ -61,9 +61,9 @@ export class AudioStreamer {
         };
     }
 
-    async connect() {
+    async connect(historyTranscript = null) {
         this.onStateChange('connecting');
-        this.client.connect();
+        this.client.connect(historyTranscript);
 
         try {
             // Revert back to natively initializing the Audio Context without forcing 16000Hz.
@@ -97,8 +97,8 @@ export class AudioStreamer {
         this.onStateChange('disconnected');
     }
 
-    async startRecording() {
-        if (!this.audioContext) await this.connect();
+    async startRecording(historyTranscript = null) {
+        if (!this.audioContext) await this.connect(historyTranscript);
 
         try {
             if (this.audioContext.state === 'suspended') {

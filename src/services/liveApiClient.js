@@ -30,7 +30,7 @@ export class LiveAPIClient {
         this.audioChunkBuffer = [];    // Buffers AI audio for transcription
     }
 
-    connect() {
+    connect(historyTranscript = null) {
         if (this.ws) return;
 
         const url = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${this.apiKey}`;
@@ -39,7 +39,7 @@ export class LiveAPIClient {
         this.ws.onopen = () => {
             console.log("WebSocket connection established");
 
-            const aiPrompt = `You are a highly experienced human legal investigator conducting an intake call. You are speaking on the phone with a potential client. You are NOT an AI. You are a real person. Act like a real person. 
+            let aiPrompt = `You are a highly experienced human legal investigator conducting an intake call. You are speaking on the phone with a potential client. You are NOT an AI. You are a real person. Act like a real person. 
 
 Here is your reference material for the types of information you need to uncover based on their case type:
 """
@@ -56,6 +56,10 @@ CRITICAL BEHAVIORAL RULES:
 7. PATIENCE: If they need to look for a paper or think, just say "Take your time" and wait.
 
 Keep digging naturally until you have gathered every piece of required information.`;
+
+            if (historyTranscript) {
+                aiPrompt += `\n\n[SYSTEM ALERT: You were temporarily disconnected from the call. You are now reconnected. Here is the transcript of the conversation so far:]\n"""\n${historyTranscript}\n"""\n\nResume the interview seamlessly from where you left off. DO NOT REPEAT YOURSELF. DO NOT apologize for the disconnect. Just continue the conversation naturally.`;
+            }
 
             // Send the initial setup message
             const setupMessage = {
