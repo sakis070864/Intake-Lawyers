@@ -204,6 +204,17 @@ export default function InterviewRoom() {
             const generatedRoadmap = await generateClientRoadmap(clientForm.firstName, clientForm.issue);
             setRoadmap(generatedRoadmap);
             setShowPreChatForm(false);
+
+            // Save the issue to localStorage so Dashboard can see it before completion
+            const intakes = JSON.parse(localStorage.getItem('intakes') || '[]');
+            const updatedIntakes = intakes.map(i => {
+                if (i.id === id) {
+                    return { ...i, issue: clientForm.issue, clientDetails: clientForm };
+                }
+                return i;
+            });
+            localStorage.setItem('intakes', JSON.stringify(updatedIntakes));
+
         } catch (err) {
             console.error("Failed to generate roadmap", err);
             alert("Failed to initialize the interview roadmap. Please try again.");
@@ -246,7 +257,7 @@ export default function InterviewRoom() {
             const intakes = JSON.parse(localStorage.getItem('intakes') || '[]');
             const updatedIntakes = intakes.map(i => {
                 if (i.id === sessionInfo.id) {
-                    return { ...i, status: 'completed', transcript: fullTranscript, summary: summary };
+                    return { ...i, status: 'completed', transcript: fullTranscript, summary: summary, issue: clientForm.issue, completedAt: new Date().toISOString() };
                 }
                 return i;
             });

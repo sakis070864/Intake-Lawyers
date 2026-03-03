@@ -112,7 +112,8 @@ export default function Dashboard() {
                             <thead>
                                 <tr>
                                     <th>Client Name</th>
-                                    <th>Created Date</th>
+                                    <th>Case Type</th>
+                                    <th>Date</th>
                                     <th>Status</th>
                                     <th>Summary</th>
                                     <th style={{ textAlign: 'right' }}>Actions</th>
@@ -122,7 +123,20 @@ export default function Dashboard() {
                                 {intakes.map((intake) => (
                                     <tr key={intake.id}>
                                         <td style={{ fontWeight: 500 }}>{intake.clientName}</td>
-                                        <td>{new Date(intake.createdAt).toLocaleDateString()}</td>
+                                        <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {intake.issue ? (
+                                                <span title={intake.issue}>
+                                                    {intake.issue.length > 40 ? intake.issue.substring(0, 40) + '...' : intake.issue}
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Awaiting Intake</span>
+                                            )}
+                                        </td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>
+                                            {intake.completedAt
+                                                ? new Date(intake.completedAt).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                                : new Date(intake.createdAt).toLocaleDateString()}
+                                        </td>
                                         <td>{getStatusBadge(intake.status, intake.expiresAt)}</td>
                                         <td>
                                             {intake.status === 'completed' && intake.summary ? (
