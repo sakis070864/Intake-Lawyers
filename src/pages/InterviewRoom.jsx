@@ -15,6 +15,7 @@ export default function InterviewRoom() {
 
     // connectionState: 'disconnected', 'connecting', 'connected', 'recording'
     const [connectionState, setConnectionState] = useState('disconnected');
+    const [isReconnecting, setIsReconnecting] = useState(false);
     const [isProcessingSummary, setIsProcessingSummary] = useState(false);
 
     const messagesEndRef = useRef(null);
@@ -103,8 +104,13 @@ export default function InterviewRoom() {
             },
             (state) => {
                 setConnectionState(state);
+                if (state === 'connected' || state === 'recording') {
+                    setIsReconnecting(false);
+                }
+
                 // Trigger Auto-Reconnect if this was an unexpected drop (like Gemini's 15-min limit)
                 if (state === 'disconnected' && !intentionalDisconnect.current && audioStreamerRef.current) {
+                    setIsReconnecting(true);
                     console.log("Unexpected socket closure detected. Auto-reconnecting to maintain interview...");
                     const history = transcriptRef.current.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
 
@@ -252,17 +258,17 @@ export default function InterviewRoom() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
 
                     {/* Connection Status Indicator */}
-                    {connectionState === 'disconnected' && (
+                    {(connectionState === 'disconnected' && !isReconnecting) && (
                         <button className="btn btn-primary" onClick={handleConnectClick}>
                             <Play size={16} /> Start Call
                         </button>
                     )}
-                    {connectionState === 'connecting' && (
+                    {(connectionState === 'connecting' || isReconnecting) && (
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Wifi className="animate-pulse" size={16} /> Connecting...
+                            <Wifi className="animate-pulse" size={16} /> {isReconnecting ? "Restoring Connection..." : "Connecting..."}
                         </span>
                     )}
-                    {isConnected && (
+                    {(isConnected && !isReconnecting) && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isRecording ? 'var(--success)' : 'var(--text-muted)' }}>
                             <div className={isRecording ? "recording-indicator" : ""} style={{
                                 width: '12px', height: '12px', borderRadius: '50%',
@@ -327,9 +333,9 @@ export default function InterviewRoom() {
             <div className="glass-panel" style={{ padding: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <button
                     className={`btn ${isRecording ? 'btn-danger' : 'btn-secondary'}`}
-                    style={{ padding: '1rem', borderRadius: '50%', opacity: !isConnected ? 0.5 : 1 }}
+                    style={{ padding: '1rem', borderRadius: '50%', opacity: (!isConnected && !isReconnecting) ? 0.5 : 1 }}
                     onClick={toggleRecording}
-                    disabled={!isConnected || isProcessingSummary}
+                    disabled={(!isConnected && !isReconnecting) || isProcessingSummary}
                     title={isRecording ? "Mute Microphone" : "Unmute Microphone"}
                 >
                     {isRecording ? <MicOff size={24} /> : <Mic size={24} />}
@@ -340,16 +346,16 @@ export default function InterviewRoom() {
                         type="text"
                         className="input-field"
                         style={{ flex: 1, borderRadius: '24px', padding: '1rem 1.5rem', fontSize: '1rem' }}
-                        placeholder={!isConnected ? "Click 'Start Call' above to connect..." : "Type your response or speak into the microphone..."}
+                        placeholder={(!isConnected && !isReconnecting) ? "Click 'Start Call' above to connect..." : "Type your response or speak into the microphone..."}
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        disabled={!isConnected || isProcessingSummary || isRecording}
+                        disabled={(!isConnected && !isReconnecting) || isProcessingSummary || isRecording}
                     />
                     <button
                         type="submit"
                         className="btn btn-primary"
-                        style={{ padding: '1rem 1.5rem', borderRadius: '24px', opacity: !isConnected ? 0.5 : 1 }}
-                        disabled={!inputText.trim() || !isConnected || isProcessingSummary}
+                        style={{ padding: '1rem 1.5rem', borderRadius: '24px', opacity: (!isConnected && !isReconnecting) ? 0.5 : 1 }}
+                        disabled={!inputText.trim() || (!isConnected && !isReconnecting) || isProcessingSummary}
                     >
                         <Send size={20} />
                     </button>

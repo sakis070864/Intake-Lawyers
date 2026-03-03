@@ -197,7 +197,8 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
             /^empty string\.?$/gi,
             /^empty_result\.?$/gi,
             /^hello, how are you\??\.?$/gi,
-            /^hello\??\.?$/gi
+            /^hello\??\.?$/gi,
+            /^ήρθε ο γκολτζής πάλι εδώ\.?$/gi
         ];
 
         for (const regex of hallucinations) {
