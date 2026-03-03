@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Send, PhoneOff, AlertCircle, Wifi, Play } from 'lucide-react';
-import { summarizeCase } from '../services/geminiService';
+import { Mic, MicOff, Send, PhoneOff, AlertCircle, Wifi, Play, Loader2 } from 'lucide-react';
+import { summarizeCase, generateClientRoadmap } from '../services/geminiService';
 import { AudioStreamer } from '../services/audioStreamer';
 
 export default function InterviewRoom() {
@@ -17,6 +17,18 @@ export default function InterviewRoom() {
     const [connectionState, setConnectionState] = useState('disconnected');
     const [isReconnecting, setIsReconnecting] = useState(false);
     const [isProcessingSummary, setIsProcessingSummary] = useState(false);
+
+    // Pre-Chat Form State
+    const [showPreChatForm, setShowPreChatForm] = useState(true);
+    const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
+    const [clientForm, setClientForm] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        issue: ''
+    });
+    const [roadmap, setRoadmap] = useState(null);
 
     const messagesEndRef = useRef(null);
     const audioStreamerRef = useRef(null);
@@ -117,7 +129,12 @@ export default function InterviewRoom() {
                     // Brief delay to allow the WebSocket to fully flush before restarting
                     setTimeout(() => {
                         if (!intentionalDisconnect.current && audioStreamerRef.current) {
-                            audioStreamerRef.current.connect(history);
+                            // Fetch the latest state safely using the closures or pass them down
+                            // For simplicity, React state might be stale here if we don't use refs,
+                            // but the initial connection passes the references which are held by the streamer instance.
+                            // We will need to re-pass the params. Since this is an interval, let's pull from the 
+                            // state via a ref or let the streamer hold it natively. We'll pass the current form and roadmap.
+                            audioStreamerRef.current.connect(history, clientForm, roadmap);
                         }
                     }, 1500);
                 }
@@ -144,7 +161,7 @@ export default function InterviewRoom() {
             cleanup();
             window.removeEventListener('beforeunload', cleanup);
         };
-    }, [id]);
+    }, [id, clientForm, roadmap]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,7 +170,7 @@ export default function InterviewRoom() {
     const handleConnectClick = async () => {
         if (!audioStreamerRef.current) return;
         if (connectionState === 'disconnected') {
-            await audioStreamerRef.current.connect();
+            await audioStreamerRef.current.connect(null, clientForm, roadmap);
         }
     };
 
@@ -175,7 +192,23 @@ export default function InterviewRoom() {
         if (connectionState === 'recording') {
             audioStreamerRef.current.stopRecording();
         } else {
-            await audioStreamerRef.current.startRecording();
+            await audioStreamerRef.current.startRecording(null, clientForm, roadmap);
+        }
+    };
+
+    const handlePreChatSubmit = async (e) => {
+        e.preventDefault();
+        setIsGeneratingRoadmap(true);
+
+        try {
+            const generatedRoadmap = await generateClientRoadmap(clientForm.firstName, clientForm.issue);
+            setRoadmap(generatedRoadmap);
+            setShowPreChatForm(false);
+        } catch (err) {
+            console.error("Failed to generate roadmap", err);
+            alert("Failed to initialize the interview roadmap. Please try again.");
+        } finally {
+            setIsGeneratingRoadmap(false);
         }
     };
 
@@ -208,7 +241,7 @@ export default function InterviewRoom() {
                 return `${m.role.toUpperCase()}: ${cleanText}`;
             }).join('\n');
 
-            const summary = await summarizeCase(fullTranscript);
+            const summary = await summarizeCase(fullTranscript, clientForm);
 
             const intakes = JSON.parse(localStorage.getItem('intakes') || '[]');
             const updatedIntakes = intakes.map(i => {
@@ -248,7 +281,76 @@ export default function InterviewRoom() {
     const isRecording = connectionState === 'recording';
 
     return (
-        <div className="container animate-fade-in" style={{ height: '100vh', display: 'flex', flexDirection: 'column', maxWidth: '800px', padding: '1rem' }}>
+        <div className="container animate-fade-in" style={{ height: '100vh', display: 'flex', flexDirection: 'column', maxWidth: '800px', padding: '1rem', position: 'relative' }}>
+
+            {/* Pre-Chat Form Overlay */}
+            {showPreChatForm && (
+                <div className="modal-overlay" style={{ zIndex: 100, backdropFilter: 'blur(8px)', backgroundColor: 'rgba(15, 23, 42, 0.8)' }}>
+                    <div className="glass-panel animate-fade-in" style={{ padding: '2rem', width: '100%', maxWidth: '600px', borderRadius: '16px', border: '1px solid rgba(223, 194, 159, 0.3)' }}>
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', background: 'linear-gradient(135deg, #dfc29f, #c19b6c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>
+                            Welcome to Your Legal Intake
+                        </h2>
+                        <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem' }}>
+                            Before we begin the secure voice interview, please provide some basic information to help us prepare.
+                        </p>
+
+                        <form onSubmit={handlePreChatSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="input-group" style={{ flex: 1 }}>
+                                    <label className="input-label">First Name *</label>
+                                    <input type="text" className="input-field" required value={clientForm.firstName} onChange={(e) => setClientForm({ ...clientForm, firstName: e.target.value })} disabled={isGeneratingRoadmap} />
+                                </div>
+                                <div className="input-group" style={{ flex: 1 }}>
+                                    <label className="input-label">Last Name *</label>
+                                    <input type="text" className="input-field" required value={clientForm.lastName} onChange={(e) => setClientForm({ ...clientForm, lastName: e.target.value })} disabled={isGeneratingRoadmap} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="input-group" style={{ flex: 1 }}>
+                                    <label className="input-label">Email Address *</label>
+                                    <input type="email" className="input-field" required value={clientForm.email} onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })} disabled={isGeneratingRoadmap} />
+                                </div>
+                                <div className="input-group" style={{ flex: 1 }}>
+                                    <label className="input-label">Phone Number *</label>
+                                    <input type="tel" className="input-field" required value={clientForm.phone} onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })} disabled={isGeneratingRoadmap} />
+                                </div>
+                            </div>
+                            <div className="input-group">
+                                <label className="input-label">Short Description of Your Issue *</label>
+                                <textarea
+                                    className="input-field"
+                                    required
+                                    rows={3}
+                                    placeholder="e.g. 'I was in a car accident last week.' or 'I have a real estate deed dispute.'"
+                                    value={clientForm.issue}
+                                    onChange={(e) => setClientForm({ ...clientForm, issue: e.target.value })}
+                                    disabled={isGeneratingRoadmap}
+                                    style={{ resize: 'vertical' }}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="btn btn-primary"
+                                style={{
+                                    marginTop: '1rem', padding: '1rem', fontSize: '1.1rem',
+                                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem',
+                                    opacity: isGeneratingRoadmap ? 0.7 : 1
+                                }}
+                                disabled={isGeneratingRoadmap}
+                            >
+                                {isGeneratingRoadmap ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} /> Building AI Interview Roadmap...
+                                    </>
+                                ) : (
+                                    "Continue to Interview"
+                                )}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <header className="glass-panel" style={{ padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>

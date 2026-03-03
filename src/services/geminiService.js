@@ -11,11 +11,48 @@ const getClient = () => {
 };
 
 /**
+ * Generates a structured interview roadmap using Google Search Grounding based on the client's case description.
+ * @param {string} firstName The client's first name.
+ * @param {string} shortDescription The short description of the legal issue.
+ * @returns {Promise<string>} The generated roadmap.
+ */
+export const generateClientRoadmap = async (firstName, shortDescription) => {
+    try {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+            console.warn("No API key, returning mock roadmap.");
+            return `MOCK ROADMAP FOR: ${shortDescription}\n1. Ask about the date of the incident.\n2. Ask for documentation.\n3. Determine the desired legal outcome.`;
+        }
+
+        const ai = getClient();
+        const prompt = `You are a legal research AI. A potential client named ${firstName} has provided the following short description of their legal issue:
+"${shortDescription}"
+
+Search the internet to identify the most critical and specific questions a top-tier lawyer would ask during an initial intake call for this EXACT type of case.
+Create a highly structured 'Interrogation Roadmap' for our AI Voice Investigator to use. Focus on gathering hard facts, dates, dollar amounts, and identifying potential legal red flags (like statute of limitations or jurisdiction issues).
+
+Format the roadmap as a clean, direct guide. Do not include fluff. Just the essential questions and areas of investigation.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-3-flash-preview',
+            contents: prompt,
+            tools: [{ googleSearch: {} }]
+        });
+
+        return response.text;
+    } catch (error) {
+        console.error("Error generating client roadmap:", error);
+        throw error;
+    }
+};
+
+/**
  * Summarizes the interview transcript using Gemini 3.1 Pro Preview.
  * @param {string} transcript The full transcript of the interview.
+ * @param {object} clientDetails The client's contact information from the pre-chat form.
  * @returns {Promise<string>} The generated summary.
  */
-export const summarizeCase = async (transcript) => {
+export const summarizeCase = async (transcript, clientDetails = null) => {
     try {
         const rawApiKey = import.meta.env.VITE_GEMINI_API_KEY;
         const apiKey = rawApiKey ? rawApiKey.trim() : "";
@@ -45,7 +82,7 @@ CRITICAL FORMATTING INSTRUCTIONS:
 - Add <br> tags for spacing where necessary.
 
 Include the following sections (formatted as mentioned above):
-- <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">CLIENT OVERVIEW</h4>: Brief context (name, incident date if mentioned). You MUST include a line here stating: <b>Date/Time:</b> ${currentDateTime}
+- <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">CLIENT OVERVIEW</h4>: Brief context (name, incident date if mentioned). You MUST include a line here stating: <b>Date/Time:</b> ${currentDateTime}. You MUST also explicitly list their contact details exactly as provided: <br><b>Name:</b> ${clientDetails?.firstName || '[Name]'} ${clientDetails?.lastName || ''}<br><b>Phone:</b> ${clientDetails?.phone || '[Phone]'} <br><b>Email:</b> ${clientDetails?.email || '[Email]'}
 - <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">CORE ISSUE</h4>: The main legal problem.
 - <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">KEY FACTS</h4>: Bulleted list of important details.
 - <h4 style="color: #7dd3fc; margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 0.05em;">POTENTIAL RED FLAGS</h4>: Anything that might make the case difficult (e.g., statute of limitations, lack of evidence).
@@ -198,7 +235,10 @@ export const transcribeClientAudioBlob = async (webmBase64) => {
             /^empty_result\.?$/gi,
             /^hello, how are you\??\.?$/gi,
             /^hello\??\.?$/gi,
-            /^ήρθε ο γκολτζής πάλι εδώ\.?$/gi
+            /^ήρθε ο γκολτζής πάλι εδώ\.?$/gi,
+            /^# \[Empty Output\]\.?$/gi,
+            /^Fascinating\.?$/gi,
+            /^I'm just gonna\.\.\.$/gi
         ];
 
         for (const regex of hallucinations) {
